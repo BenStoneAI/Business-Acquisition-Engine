@@ -1,0 +1,46 @@
+name: Daily Radar (cloud backup)
+
+# The PRIMARY nightly run is a local Windows Task Scheduler task
+# ("BoringBusinessRadar", wake-to-run) that runs src.ingest_bizbuysell on Ben's
+# machine — it builds deal packets on local disk and sends the Telegram alert.
+# This cloud workflow is a MANUAL backup (run it on days the PC is fully off).
+# The auto-schedule is intentionally disabled to avoid duplicate Telegram alerts;
+# uncomment the `schedule` block to make the cloud the always-on runner instead.
+on:
+  # schedule:
+  #   - cron: "0 12 * * *"   # 12:00 UTC = 6 AM Mountain (enable for cloud-primary)
+  workflow_dispatch:
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -q
+
+      - name: Ingest BizBuySell alerts and alert on 100%-financing deals
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MIN_SCORE_TO_REPORT: "70"
+        run: python -m src.ingest_bizbuysell
+
+      - name: Upload deal packets (if any)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deal-packets
+          path: Deals/
+          if-no-files-found: ignore

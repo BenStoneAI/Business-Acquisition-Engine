@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Boring Business Acquisition Radar//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:wasatch-hvac-services-20260719-followup1@acquisition-radar
+DTSTAMP:20260719T000000Z
+DTSTART;VALUE=DATE:20260722
+DTEND;VALUE=DATE:20260723
+SUMMARY:Follow-up 1: Wasatch HVAC Services (acquisition outreach)
+END:VEVENT
+BEGIN:VEVENT
+UID:wasatch-hvac-services-20260719-followup2@acquisition-radar
+DTSTAMP:20260719T000000Z
+DTSTART;VALUE=DATE:20260726
+DTEND;VALUE=DATE:20260727
+SUMMARY:Follow-up 2: Wasatch HVAC Services (acquisition outreach)
+END:VEVENT
+END:VCALENDAR
