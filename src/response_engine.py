@@ -15,6 +15,7 @@ delivery (Gmail draft) and live-data enrichment are separate, opt-in layers.
 """
 
 import json
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import date, timedelta
@@ -26,16 +27,16 @@ from .models import Listing, ScoreBreakdown
 from .reporting import money, pct
 from .scoring import normalized_industry_key
 
-# --- Buyer profile (edit here to change every generated document) -------------
+# --- Buyer profile (set BUYER_NAME / BUYER_EMAIL / BUYER_CREDIBILITY in .env to
+# customize every generated document for your own installation) ---------------
 
-BUYER_NAME = "Ben Stone"
-BUYER_EMAIL = "rainking6693@gmail.com"
-BUYER_CREDIBILITY = (
-    "Ben Stone is an MBA with an accounting and finance background, including "
-    "controller-level experience, operational controls, financial reporting, and "
-    "automation. He is looking to acquire a durable, service-based local business "
+BUYER_NAME = os.environ.get("BUYER_NAME", "Your Name Here")
+BUYER_EMAIL = os.environ.get("BUYER_EMAIL", "you@example.com")
+BUYER_CREDIBILITY = os.environ.get(
+    "BUYER_CREDIBILITY",
+    "A qualified buyer looking to acquire a durable, service-based local business "
     "with strong cash flow, fair seller financing, and a smooth transition plan "
-    "that protects employees, customers, and the seller's legacy."
+    "that protects employees, customers, and the seller's legacy.",
 )
 
 
