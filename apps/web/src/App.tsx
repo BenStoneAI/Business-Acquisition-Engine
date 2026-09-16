@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import { HandoffPage } from "./pages/HandoffPage";
 import { RadarPage } from "./pages/RadarPage";
 import { OpportunitiesPage } from "./pages/OpportunitiesPage";
@@ -9,6 +9,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { getTenantId } from "./tenant";
 
 export function App() {
+  useLocation();
   const tenant = getTenantId();
   return (
     <div className="app-shell">
