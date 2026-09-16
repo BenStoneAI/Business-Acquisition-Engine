@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import psycopg2
 
@@ -13,7 +13,14 @@ class DataPlaneError(RuntimeError):
 
 
 def _normalize_url(url: str) -> str:
-    return url.strip()
+    url = url.strip()
+    parsed = urlparse(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key.lower() != "channel_binding"
+    ]
+    return urlunparse(parsed._replace(query=urlencode(query)))
 
 
 def _url_fingerprint(url: str) -> tuple[str, str]:

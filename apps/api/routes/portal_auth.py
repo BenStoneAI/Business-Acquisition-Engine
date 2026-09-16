@@ -27,12 +27,13 @@ def post_portal_handoff(body: PortalHandoffRequest, response: Response) -> dict:
         raise HTTPException(status_code=403, detail="Invalid or expired handoff token.")
     tenant_id = str(payload["tenantId"])
     ensure_tenant_exists(tenant_id)
+    secure = os.environ.get("RADAR_COOKIE_SECURE", "1") != "0"
     response.set_cookie(
         SESSION_COOKIE,
         sign_tenant_session(tenant_id),
         httponly=True,
-        secure=True,
-        samesite="lax",
+        secure=secure,
+        samesite="none" if secure else "lax",
         max_age=60 * 60 * 12,
         path="/",
     )
