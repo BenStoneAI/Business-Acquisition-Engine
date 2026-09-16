@@ -53,6 +53,7 @@ def match_tenant(tenant_id: str) -> int:
                     listings = pcur.fetchall()
 
             upserted = 0
+            kept: list[int] = []
             for (
                 listing_id,
                 industry,
@@ -96,6 +97,14 @@ def match_tenant(tenant_id: str) -> int:
                     (tenant_id, listing_id, total_score, total_score),
                 )
                 upserted += 1
+                kept.append(listing_id)
+            if kept:
+                cur.execute(
+                    "DELETE FROM tenant_matches WHERE tenant_id = %s AND listing_id <> ALL(%s)",
+                    (tenant_id, kept),
+                )
+            else:
+                cur.execute("DELETE FROM tenant_matches WHERE tenant_id = %s", (tenant_id,))
         conn.commit()
     return upserted
 

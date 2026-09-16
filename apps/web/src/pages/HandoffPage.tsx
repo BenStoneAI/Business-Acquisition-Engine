@@ -21,6 +21,7 @@ export function HandoffPage() {
       const res = await fetch(`${API_BASE.replace(/\/$/, "")}/auth/portal-handoff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ token }),
       });
       const body = (await res.json().catch(() => ({}))) as { tenant_id?: string; detail?: string };

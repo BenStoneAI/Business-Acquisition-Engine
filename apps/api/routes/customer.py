@@ -22,6 +22,7 @@ from apps.api.tenant import (
 from src.financing_filter import financing_status
 from src.models import Listing, ScoreBreakdown
 from src.response_engine import build_response_package, render_package_markdown
+from src import response_engine as response_engine_mod
 from src.scoring import normalized_industry_key, score_listing
 
 router = APIRouter(prefix="/customer", tags=["customer"])
@@ -59,15 +60,37 @@ def _score_to_breakdown(row: dict) -> ScoreBreakdown:
     )
 
 
+def _num(row: dict, key: str):
+    val = row.get(key)
+    return float(val) if val is not None else None
+
+
+def _int(row: dict, key: str):
+    val = row.get(key)
+    return int(val) if val is not None else None
+
+
 def _listing_from_row(row: dict) -> Listing:
     return Listing(
         business_name=row["business_name"],
         industry=row["industry"],
         location=row.get("location") or "",
-        asking_price=float(row["asking_price"]) if row.get("asking_price") is not None else None,
-        revenue=float(row["revenue"]) if row.get("revenue") is not None else None,
-        sde=float(row["sde"]) if row.get("sde") is not None else None,
+        asking_price=_num(row, "asking_price"),
+        revenue=_num(row, "revenue"),
+        sde=_num(row, "sde"),
+        ebitda=_num(row, "ebitda"),
+        real_estate_included=bool(row.get("real_estate_included")),
         seller_financing=bool(row.get("seller_financing")),
+        sba_prequalified=bool(row.get("sba_prequalified")),
+        reason_for_sale=row.get("reason_for_sale"),
+        years_in_business=_int(row, "years_in_business"),
+        employees=_int(row, "employees"),
+        owner_hours_per_week=_num(row, "owner_hours_per_week"),
+        recurring_revenue_pct=_num(row, "recurring_revenue_pct"),
+        customer_concentration_pct=_num(row, "customer_concentration_pct"),
+        equipment_condition=row.get("equipment_condition"),
+        lease_years_remaining=_num(row, "lease_years_remaining"),
+        source=row.get("source"),
         listing_url=row.get("listing_url"),
         notes=row.get("notes") or "",
     )
@@ -394,11 +417,23 @@ def interested(listing_id: int, tenant_id: str = Depends(parse_tenant_id)) -> di
             score_row = dict(zip([d[0] for d in cur.description], cur.fetchone()))
             listing = _listing_from_row(listing_row)
             score = _score_to_breakdown(score_row)
-            pkg = build_response_package(listing, score)
-            md = render_package_markdown(pkg)
-            blurb = profile.get("credibility_blurb")
-            if blurb:
-                md = md.replace(pkg.credibility_blurb, blurb)
+            previous = (
+                response_engine_mod.BUYER_NAME,
+                response_engine_mod.BUYER_EMAIL,
+                response_engine_mod.BUYER_CREDIBILITY,
+            )
+            response_engine_mod.BUYER_NAME = profile.get("buyer_name") or previous[0]
+            response_engine_mod.BUYER_EMAIL = profile.get("buyer_entity") or previous[1]
+            response_engine_mod.BUYER_CREDIBILITY = profile.get("credibility_blurb") or previous[2]
+            try:
+                pkg = build_response_package(listing, score)
+                md = render_package_markdown(pkg)
+            finally:
+                (
+                    response_engine_mod.BUYER_NAME,
+                    response_engine_mod.BUYER_EMAIL,
+                    response_engine_mod.BUYER_CREDIBILITY,
+                ) = previous
             deal_id = str(uuid.uuid4())
             cur.execute(
                 """

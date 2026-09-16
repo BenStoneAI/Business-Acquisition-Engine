@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
             r"https://([a-z0-9-]+\.)?vercel\.app|"
             r"https://portal\.aptria\.net"
         ),
+        allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )

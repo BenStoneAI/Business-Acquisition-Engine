@@ -7,9 +7,9 @@ import pytest
 from apps.api.db import DataPlaneError, get_customer_database_url
 
 
-def test_customer_url_refuses_operator_fingerprint(monkeypatch):
-    monkeypatch.setenv("DATABASE_URL", "postgresql://op@operator.example/radar")
-    monkeypatch.setenv("CUSTOMER_DATABASE_URL", "postgresql://op@operator.example/radar")
+def test_customer_url_rejects_same_host_db_different_role(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://operator@operator.example/radar")
+    monkeypatch.setenv("CUSTOMER_DATABASE_URL", "postgresql://customer@operator.example/radar")
     with pytest.raises(DataPlaneError):
         get_customer_database_url()
 

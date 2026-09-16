@@ -16,12 +16,11 @@ def _normalize_url(url: str) -> str:
     return url.strip()
 
 
-def _url_fingerprint(url: str) -> tuple[str, str, str]:
+def _url_fingerprint(url: str) -> tuple[str, str]:
     parsed = urlparse(url)
     return (
         (parsed.hostname or "").lower(),
         (parsed.path or "").lstrip("/").lower(),
-        (parsed.username or "").lower(),
     )
 
 

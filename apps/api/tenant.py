@@ -2,21 +2,61 @@
 
 from __future__ import annotations
 
+import hmac
+import hashlib
+import os
 import uuid
 from typing import Optional
 
-from fastapi import Header, HTTPException
+from fastapi import Cookie, Header, HTTPException
 
 from apps.api.db import get_customer_connection
 
+SESSION_COOKIE = "radar_session"
 
-def parse_tenant_id(x_tenant_id: Optional[str] = Header(default=None, alias="X-Tenant-Id")) -> str:
-    if not x_tenant_id or not x_tenant_id.strip():
-        raise HTTPException(status_code=401, detail="X-Tenant-Id header is required.")
+
+def _session_secret() -> str:
+    return os.environ.get("RADAR_PORTAL_HANDOFF_SECRET") or os.environ.get("ARTIFACT_SIGNING_KEY") or ""
+
+
+def sign_tenant_session(tenant_id: str) -> str:
+    secret = _session_secret()
+    if not secret:
+        raise RuntimeError("handoff secret missing")
+    sig = hmac.new(secret.encode(), tenant_id.encode(), hashlib.sha256).hexdigest()
+    return f"{tenant_id}.{sig}"
+
+
+def parse_tenant_session(value: str | None) -> str | None:
+    if not value or "." not in value:
+        return None
+    tenant_id, sig = value.split(".", 1)
     try:
-        return str(uuid.UUID(x_tenant_id.strip()))
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid X-Tenant-Id.") from exc
+        uuid.UUID(tenant_id)
+    except ValueError:
+        return None
+    expected = sign_tenant_session(tenant_id)
+    if not hmac.compare_digest(expected, value):
+        return None
+    return tenant_id
+
+
+def parse_tenant_id(
+    x_tenant_id: Optional[str] = Header(default=None, alias="X-Tenant-Id"),
+    radar_session: Optional[str] = Cookie(default=None, alias=SESSION_COOKIE),
+) -> str:
+    from_cookie = parse_tenant_session(radar_session)
+    if from_cookie:
+        if x_tenant_id and x_tenant_id.strip() and str(uuid.UUID(x_tenant_id.strip())) != from_cookie:
+            raise HTTPException(status_code=404, detail="Tenant not found.")
+        return from_cookie
+    allow_header = os.environ.get("RADAR_ALLOW_HEADER_TENANT") == "1"
+    if allow_header and x_tenant_id and x_tenant_id.strip():
+        try:
+            return str(uuid.UUID(x_tenant_id.strip()))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid X-Tenant-Id.") from exc
+    raise HTTPException(status_code=401, detail="Sign in from the Aptria Customer Portal.")
 
 
 def create_tenant(name: str, *, tenant_id: str | None = None) -> str:

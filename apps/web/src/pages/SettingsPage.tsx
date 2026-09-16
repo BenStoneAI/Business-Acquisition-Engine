@@ -10,10 +10,27 @@ export function SettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    api<{ industries: Industry[] }>("/customer/settings").then((body) => {
-      setIndustries(body.industries);
-      setSelected(body.industries.filter((i) => i.on_thesis).map((i) => i.id));
-    }).catch(() => undefined);
+    api<{
+      industries: Industry[];
+      criteria?: {
+        states?: string[];
+        industries?: string[];
+        financing_floor?: string;
+        score_threshold?: number;
+      } | null;
+    }>("/customer/settings")
+      .then((body) => {
+        setIndustries(body.industries);
+        if (body.criteria?.industries?.length) {
+          setSelected(body.criteria.industries);
+        } else {
+          setSelected(body.industries.filter((i) => i.on_thesis).map((i) => i.id));
+        }
+        if (body.criteria?.states?.length) {
+          setStates(body.criteria.states.join(","));
+        }
+      })
+      .catch(() => undefined);
   }, []);
 
   async function onSubmit(event: FormEvent) {

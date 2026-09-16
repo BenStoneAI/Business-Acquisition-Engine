@@ -17,7 +17,11 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   };
   if (tenantId) headers["X-Tenant-Id"] = tenantId;
   if (init.body) headers["Content-Type"] = "application/json";
-  const res = await fetch(`${API_BASE.replace(/\/$/, "")}${path}`, { ...init, headers });
+    const res = await fetch(`${API_BASE.replace(/\/$/, "")}${path}`, {
+      ...init,
+      headers,
+      credentials: "include",
+    });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new ApiError((body as { detail?: string }).detail ?? res.statusText, res.status);

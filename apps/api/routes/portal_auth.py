@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from apps.api.aptria_handoff import verify_portal_handoff_token
-from apps.api.tenant import ensure_tenant_exists
+from apps.api.tenant import SESSION_COOKIE, ensure_tenant_exists, sign_tenant_session
 
 router = APIRouter(tags=["portal-auth"])
 
@@ -18,7 +18,7 @@ class PortalHandoffRequest(BaseModel):
 
 
 @router.post("/auth/portal-handoff")
-def post_portal_handoff(body: PortalHandoffRequest) -> dict:
+def post_portal_handoff(body: PortalHandoffRequest, response: Response) -> dict:
     secret = os.environ.get("RADAR_PORTAL_HANDOFF_SECRET") or os.environ.get("ARTIFACT_SIGNING_KEY")
     if not secret:
         raise HTTPException(status_code=503, detail="Portal handoff is not configured.")
@@ -27,6 +27,15 @@ def post_portal_handoff(body: PortalHandoffRequest) -> dict:
         raise HTTPException(status_code=403, detail="Invalid or expired handoff token.")
     tenant_id = str(payload["tenantId"])
     ensure_tenant_exists(tenant_id)
+    response.set_cookie(
+        SESSION_COOKIE,
+        sign_tenant_session(tenant_id),
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=60 * 60 * 12,
+        path="/",
+    )
     return {
         "tenant_id": tenant_id,
         "email": payload["email"],
