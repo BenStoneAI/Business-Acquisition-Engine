@@ -1,0 +1,36 @@
+:root {
+  --navy: #0b1f3a;
+  --paper: #f6f1e8;
+  --ink: #122033;
+  --rim: #d5cbb8;
+  --ok: #1f6b4a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+.app-shell { display: flex; min-height: 100vh; }
+nav {
+  width: 240px;
+  background: var(--navy);
+  color: #fff;
+  padding: 1.5rem 1rem;
+}
+nav a { color: #fff; display: block; margin: 0.6rem 0; text-decoration: none; }
+main { flex: 1; padding: 2rem; }
+table { width: 100%; border-collapse: collapse; }
+th, td { border-bottom: 1px solid var(--rim); padding: 0.5rem 0.4rem; text-align: left; }
+button, .btn {
+  background: var(--navy);
+  color: #fff;
+  border: 0;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+input, select, textarea { width: 100%; padding: 0.4rem; margin: 0.3rem 0 0.8rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; }
+.card { background: #fff; border: 1px solid var(--rim); padding: 1rem; border-radius: 12px; }
+.card strong { display: block; font-size: 1.6rem; }

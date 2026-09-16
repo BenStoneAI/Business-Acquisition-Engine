@@ -44,3 +44,6 @@ logs/
 
 .ralph/
 .claude/
+
+apps/web/node_modules/
+apps/web/dist/
